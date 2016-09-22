@@ -1,0 +1,8 @@
+[package]
+name = "future-fun"
+version = "0.1.0"
+authors = ["Andrew Hobden <andrew@hoverbear.org>"]
+
+[dependencies]
+futures = "*"
+rand = "*"
