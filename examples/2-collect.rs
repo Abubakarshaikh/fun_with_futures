@@ -1,22 +1,10 @@
 extern crate futures;
-extern crate rand;
+extern crate fun_with_futures;
 
 use std::thread;
 use futures::{Future, collect};
-use std::time::Duration;
-use rand::distributions::{Range, IndependentSample};
 
-// This function sleeps for a bit then returns how long it slept.
-fn sleep_a_little_bit() -> u64 {
-    let mut generator = rand::thread_rng();
-    let possibilities = Range::new(0, 1000);
-
-    let choice = possibilities.ind_sample(&mut generator);
-
-    let a_little_bit = Duration::from_millis(choice);
-    thread::sleep(a_little_bit);
-    choice
-}
+use fun_with_futures::sleep_a_little_bit;
 
 fn main() {
     // We'll create a set to add all of the recievers to.
@@ -32,7 +20,7 @@ fn main() {
         // Spawning up a thread means things won't be executed sequentially, so this will actually
         // behave like a future value, so we can actually see how they work.
         thread::spawn(move || {
-            println!("{} --> START.", index);
+            println!("{} --> START", index);
 
             let waited_for = sleep_a_little_bit();
             println!("{} --- WAITED {}", index, waited_for);
@@ -53,5 +41,5 @@ fn main() {
         .unwrap();
 
     // Now what was the sum of all the waiting times?
-    println!("SUM {:?}", result);
+    println!("SUM {}", result);
 }

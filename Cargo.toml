@@ -1,5 +1,5 @@
 [package]
-name = "future-fun"
+name = "fun_with_futures"
 version = "0.1.0"
 authors = ["Andrew Hobden <andrew@hoverbear.org>"]
 
