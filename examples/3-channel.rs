@@ -47,6 +47,7 @@ fn main() {
             // `ok` is a simple way to say "Yes this worked." 
             ok(acc + val)
         })
-        .wait();
-    println!("SUM {}", sum.unwrap());
+        .wait()
+        .unwrap();
+    println!("SUM {}", sum);
 }
