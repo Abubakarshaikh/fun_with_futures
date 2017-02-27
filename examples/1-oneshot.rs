@@ -3,41 +3,33 @@ extern crate fun_with_futures;
 
 use std::thread;
 use futures::Future;
+use futures::sync::oneshot;
 
 use fun_with_futures::sleep_a_little_bit;
 
 fn main() {
-    // These are simple futures built into the crate which feel sort of like
+    // This is a simple future built into the crate which feel sort of like
     // one-time channels. You get a (sender, receiver) when you invoke them.
-    let (tx_1, rx_1) = futures::oneshot();
-    let (tx_2, rx_2) = futures::oneshot();
+    // Sending a value consumes that side of the channel, leaving only the reciever.
+    let (tx, rx) = oneshot::channel();
 
     // We can spawn a thread to simulate an action that takes time, like a web
-    // request.
+    // request. In this case it's just sleeping for a random time.
     thread::spawn(move || {
-        println!("1 --> START");
+        println!("--> START");
 
         let waited_for = sleep_a_little_bit();
-        println!("1 --- WAITED {}", waited_for);
-        tx_1.complete(waited_for);
+        println!("--- WAITED {}", waited_for);
+        // This consumes the sender, we can't use it afterwards.
+        tx.complete(waited_for);
 
-        println!("1 <-- END");
+        println!("<-- END");
     });
 
-    thread::spawn(move || {
-        println!("2 --> START");
-
-        let waited_for = sleep_a_little_bit();
-        println!("2 --- WAITED {}", waited_for);
-        tx_2.complete(waited_for);
-
-        println!("2 <-- END");
-    });
-
-    rx_1.join(rx_2)
-        .map(|(a, b)| {
-            println!("SUM {}", a + b);
-        })
-        .wait()
+    // Now we can wait for it to finish
+    let result = rx.wait()
         .unwrap();
+
+    // This value will be the same as the previous "WAITED" output.
+    println!("{}", result);
 }

@@ -4,7 +4,7 @@ use std::thread;
 use std::time::Duration;
 use rand::distributions::{Range, IndependentSample};
 
-// This function sleeps for a bit then returns how long it slept.
+// This function sleeps for a bit, then returns how long it slept.
 pub fn sleep_a_little_bit() -> u64 {
     let mut generator = rand::thread_rng();
     let possibilities = Range::new(0, 1000);

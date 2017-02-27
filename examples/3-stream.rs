@@ -12,7 +12,7 @@ use fun_with_futures::sleep_a_little_bit;
 const BUFFER_SIZE: usize = 10;
 
 fn main() {
-    // A channel represents a stream and will yeild a series of futures.
+    // A channel represents a stream and will yield a series of futures.
 
     // We're using a bounded channel here with a limited size.
     let (mut tx, rx) = mpsc::channel(BUFFER_SIZE);
@@ -25,10 +25,12 @@ fn main() {
             let waited_for = sleep_a_little_bit();
             println!("--- THREAD WAITED {}", waited_for);
 
-            // When we `.send()` a value it consumes the sender. Returning
+            // When we `send()` a value it consumes the sender. Returning
             // a 'new' sender which we have to handle. In this case we just
             // re-assign.
             match tx.send(waited_for).wait() {
+                // Why do we need to do this? This is how back pressure is implemented.
+                // When the buffer is full `wait()` will block.
                 Ok(new_tx) => tx = new_tx,
                 Err(_) => panic!("Oh no!"),
             }
@@ -44,7 +46,8 @@ fn main() {
             // Notice when we run that this is happening after each item of
             // the stream resolves, like an iterator.
             println!("--- FOLDING {} INTO {}", val, acc);
-            // `ok` is a simple way to say "Yes this worked." 
+            // `ok()` is a simple way to say "Yes this worked."
+            // `err()` also exists.
             ok(acc + val)
         })
         .wait()
