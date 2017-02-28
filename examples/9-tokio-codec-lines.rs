@@ -4,7 +4,8 @@ extern crate tokio_core;
 use std::net::SocketAddr;
 use futures::future::Future;
 use futures::Stream;
-use std::io::Result;
+use std::io;
+use std::str;
 use tokio_core::io::{Codec, EasyBuf, Io};
 use tokio_core::reactor::Core;
 use tokio_core::net::TcpListener;
@@ -15,20 +16,35 @@ const LISTEN_TO: &'static str = "0.0.0.0:8080";
 struct EchoCodec;
 impl Codec for EchoCodec {
     // Associated types which define the data taken/produced by the codec.
-    type In = Vec<u8>;
-    type Out = Vec<u8>;
+    type In = String;
+    type Out = String;
 
     // Returns `Ok(Some(In))` if there is a frame, `Ok(None)` if it needs more data.
-    fn decode(&mut self, buf: &mut EasyBuf) -> Result<Option<Self::In>> {
-        // It's important to drain the buffer!
-        let amount = buf.len();
-        let data = buf.drain_to(amount);
-        Ok(Some(data.as_slice().into()))
+    fn decode(&mut self, buf: &mut EasyBuf) -> io::Result<Option<Self::In>> {
+        match buf.as_slice().iter().position(|&b| b == b'\n') {
+            Some(i) => {
+                // Drain from the buffer (this is important!)
+                let line = buf.drain_to(i);
+
+                // Also remove the '\n'.
+                buf.drain_to(1);
+
+                // Turn this data into a UTF string and return it in a Frame.
+                match str::from_utf8(line.as_slice()) {
+                    Ok(s) => Ok(Some(s.to_string())),
+                    Err(_) => Err(io::Error::new(io::ErrorKind::Other,
+                                                "invalid UTF-8")),
+                }
+            },
+            None => Ok(None),
+        }
     }
 
     // Produces a frame.
-    fn encode(&mut self, msg: Self::Out, buf: &mut Vec<u8>) -> Result<()> {
-        buf.extend(msg);
+    fn encode(&mut self, msg: Self::Out, buf: &mut Vec<u8>) -> io::Result<()> {
+        buf.extend(msg.as_bytes());
+        // Add the necessary newline.
+        buf.push(b'\n');
         Ok(())
     }
 }
