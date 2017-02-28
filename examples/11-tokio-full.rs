@@ -176,10 +176,10 @@ fn main() {
     // Create a server with the protocol.
     let server = TcpServer::new(ExampleProto, socket);
 
+    // Create a database instance to provide to spawned services.
     let db = Arc::new(Mutex::new(HashMap::new()));
 
-    // We provide a way to *instantiate* the service for each new
-    // connection; here, we just immediately return a new instance.
+    // Serve requests with our created service and a handle to the database.    
     server.serve(move || Ok(ExampleService { db: db.clone() }));
 }
 // Throw some data at it with `curl 127.0.0.1 8080/foo` and `curl 127.0.0.1 8080 --data bar`
